@@ -1,0 +1,12 @@
+{
+  "name": "my_dashboard",
+  "version": "1.0.0",
+  "description": "This is a dashboard which is handle a my Agency and my portfolio website. It handle a all operation by here!",
+  "license": "ISC",
+  "author": "Infant Raj",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
