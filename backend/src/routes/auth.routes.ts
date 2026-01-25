@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import asyncHandler from 'express-async-handler';
+import authMiddleware from '../middleware/auth.middleware';
+import { AuthController } from '../controller/auth.controller';
+const router=Router();
+router.post("/create-user", asyncHandler(AuthController.CreateUser));
+router.post("/login", asyncHandler(AuthController.login));
+router.put("/update-password", asyncHandler(AuthController.updatePassword));
+router.put("/reset-password/:userid", asyncHandler(AuthController.resetPassword));
+router.get("/logout",authMiddleware, asyncHandler(AuthController.logout));
+export default router;

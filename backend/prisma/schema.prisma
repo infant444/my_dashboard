@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+
+enum Role {
+  staff
+  admin
+  superAdmin
+}
+
+enum Category {
+  ai_technology
+  design
+  development
+  mobile
+  business
+  product
+}
+enum EnquiryStatus {
+  pending
+  in_progress
+  resolved
+  closed
+}
+
+enum FeedbackType {
+  suggestion
+  compliment
+  complaint
+  positive
+  other
+}
+
+enum Project_Category{
+  web
+  mobile_app
+  ai_agent
+  ai_chatbot
+  saas
+}
+model User {
+  userId     String   @id @default(uuid()) @map("user_id") @db.Uuid
+  fullName   String   @map("full_name") @db.VarChar(150)
+  email      String   @unique @db.VarChar(150)
+  password   String
+  position   String?
+  phone      String?  @unique
+  firstLogin Boolean  @default(true) @map("first_login")
+  role       Role     @default(staff)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Project {
+  projectId          String     @id @default(uuid()) @map("project_id") @db.Uuid
+  projectName        String     @unique @map("project_name") @db.VarChar(200)
+  techStack          String[]   @map("tech_stack")
+  projectDescription String?    @map("project_description")
+  projectThumbnail   String[]   @map("project_thumbnail")
+  liveDemo           String?    @map("live_demo")
+  gitRepo            String?    @map("git_repo")
+  duration           String?    @db.VarChar(50)
+  cost               Int?
+  category           Project_Category
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  @@map("projects")
+}
+
+model Blog {
+  blogId       String    @id @default(uuid()) @map("blog_id") @db.Uuid
+  slug         String    @unique @db.VarChar(200)
+  title        String    @db.VarChar(255)
+  excerpt      String?
+  publishDate  DateTime? @map("publish_date")
+  readTime     String?   @map("read_time") @db.VarChar(50)
+  category     Category
+  author       String?   @db.VarChar(150)
+  image        String?
+  content      String
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("blogs")
+}
+model Enquiry {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @db.VarChar(100)
+  email         String         @db.VarChar(150)
+  phone         String?        @db.VarChar(20)
+  subject       String         @db.VarChar(200)
+  message       String         @db.Text
+  status        EnquiryStatus  @default(pending)
+  adminReply    String?        @db.Text
+  repliedAt     DateTime?
+  isResolved    Boolean        @default(false)
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
+
+  @@map("enquiries")
+}
+
+model Feedback {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String?        @db.VarChar(100)
+  email         String?        @db.VarChar(150)
+  type          FeedbackType   @default(other)
+  rating        Int?           @db.SmallInt
+  message       String         @db.Text
+  adminNote     String?        @db.Text
+
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("feedbacks")
+}
