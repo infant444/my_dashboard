@@ -22,8 +22,9 @@ export class FeedbackController{
     }
     static async getAllFeedback(req:Request,res:Response,next:NextFunction){
         try {
-            // Your logic to get all feedback
-            const feedback= await prisma.feedback.findMany();
+            const feedback= await prisma.feedback.findMany({
+                orderBy: { createdAt: 'desc' }
+            });
             res.json(feedback);
         }catch(err){
             next(err)
@@ -31,11 +32,13 @@ export class FeedbackController{
     }
     static async getFeedbackById(req:Request,res:Response,next:NextFunction){
         try {
-            // Your logic to get feedback By id
             const feedbackId = req.params.feedback_id as string;
             const feedback= await prisma.feedback.findUnique({
                 where:{id:feedbackId}
             });
+            if (!feedback) {
+                return next({ status: 404, message: "Feedback not found" });
+            }
             res.json(feedback);
         }catch(err){
             next(err)

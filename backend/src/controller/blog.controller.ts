@@ -1,43 +1,66 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../lib/prisma";
-import { supabase } from "../config/supabase.config";
+import { supabase, isSupabaseConfigured } from "../config/supabase.config";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class BlogController {
-    static async create(req: Request, res: Response, next: NextFunction) {
+    static async create(req: any, res: Response, next: NextFunction) {
         try {
-            const { title, content, slug, excerpt, publishDate, readTime, category, author } = req.body;
+            const { title, content, slug, excerpt, publishDate, readTime, category, author, tags } = req.body;
             const file = req.file as Express.Multer.File;
+            const authorId = req.user.id;
             
-            const fileName = `${Date.now()}-${file.originalname}`;
+            let imageUrl: string | null = null;
 
-            const { data, error } = await supabase.storage
-                .from('project-images')
-                .upload(fileName, file.buffer, {
-                    contentType: file.mimetype
-                });
+            if (file) {
+                if (isSupabaseConfigured() && supabase) {
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    try {
+                        const { data, error } = await supabase.storage
+                            .from('Sancilo')
+                            .upload(fileName, file.buffer, {
+                                contentType: file.mimetype
+                            });
 
-            if (error) {
-                return next({ status: 500, message: "Image upload failed" });
+                        if (error) throw error;
+                        
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('Sancilo')
+                            .getPublicUrl(fileName);
+
+                        imageUrl = publicUrl;
+                    } catch (uploadError: any) {
+                        console.warn('Supabase failed, using local storage');
+                        const uploadsDir = path.join(__dirname, '../../uploads');
+                        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                        const filePath = path.join(uploadsDir, fileName);
+                        fs.writeFileSync(filePath, file.buffer);
+                        imageUrl = `/uploads/${fileName}`;
+                    }
+                } else {
+                    const uploadsDir = path.join(__dirname, '../../uploads');
+                    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    const filePath = path.join(uploadsDir, fileName);
+                    fs.writeFileSync(filePath, file.buffer);
+                    imageUrl = `/uploads/${fileName}`;
+                }
             }
-            const { data: { publicUrl } } = supabase.storage
-                .from('project-images')
-                .getPublicUrl(fileName);
-
-            const imageUrl: string = publicUrl;
 
             const blog = await prisma.blog.create({
-
                 data: {
                     title,
                     content,
                     slug,
                     excerpt,
-                    publishDate,
+                    publishDate: publishDate ? new Date(publishDate) : null,
                     readTime,
                     category,
-                    author,
+                    author: author || req.user.name,
+                    authorId,
+                    tags: tags ? tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : [],
                     image: imageUrl
-
                 }
             })
             res.json(blog);
@@ -45,11 +68,16 @@ export class BlogController {
             next(error)
         }
     }
-    static async getAllBlog(req: Request, res: Response, next: NextFunction) {
+    static async getAllBlog(req: any, res: Response, next: NextFunction) {
         try {
-            const blogs = await prisma.blog.findMany({
-                orderBy: { createdAt: 'desc' }
-            });
+            const userRole = req.user.role;
+            const userId = req.user.id;
+            
+            let blogs;
+                blogs = await prisma.blog.findMany({
+                    orderBy: { createdAt: 'desc' }
+                });
+           
             res.json(blogs);
         } catch (err) {
             next(err);
@@ -84,11 +112,21 @@ export class BlogController {
             next(err);
         }
     }
-    static async updateBlog(req: Request, res: Response, next: NextFunction) {
+    static async updateBlog(req: any, res: Response, next: NextFunction) {
         try {
             const blogId = req.params.id as string;
-            const { title, content, slug, excerpt, publishDate, readTime, category, author } = req.body;
+            const { title, content, slug, excerpt, publishDate, readTime, category, tags } = req.body;
             const file = req.file as Express.Multer.File;
+            const userRole = req.user.role;
+            const userId = req.user.id;
+
+            // Check if user can edit this blog
+            if (userRole !== 'superAdmin') {
+                const blog = await prisma.blog.findUnique({ where: { blogId } });
+                if (!blog || blog.authorId !== userId) {
+                    return next({ status: 403, message: "Not authorized to edit this blog" });
+                }
+            }
 
             const updateData: any = {
                 title,
@@ -98,28 +136,42 @@ export class BlogController {
                 publishDate: publishDate ? new Date(publishDate) : null,
                 readTime,
                 category,
-                author
+                tags: tags ? tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : undefined,
             };
 
-            // Only upload new image if file is provided
             if (file) {
-                const fileName = `${Date.now()}-${file.originalname}`;
+                if (isSupabaseConfigured() && supabase) {
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    try {
+                        const { data, error } = await supabase.storage
+                            .from('Sancilo')
+                            .upload(fileName, file.buffer, {
+                                contentType: file.mimetype
+                            });
 
-                const { data, error } = await supabase.storage
-                    .from('project-images')
-                    .upload(fileName, file.buffer, {
-                        contentType: file.mimetype
-                    });
+                        if (error) throw error;
 
-                if (error) {
-                    return next({ status: 500, message: "Image upload failed" });
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('Sancilo')
+                            .getPublicUrl(fileName);
+
+                        updateData.image = publicUrl;
+                    } catch (uploadError: any) {
+                        console.warn('Supabase failed, using local storage');
+                        const uploadsDir = path.join(__dirname, '../../uploads');
+                        if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                        const filePath = path.join(uploadsDir, fileName);
+                        fs.writeFileSync(filePath, file.buffer);
+                        updateData.image = `/uploads/${fileName}`;
+                    }
+                } else {
+                    const uploadsDir = path.join(__dirname, '../../uploads');
+                    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    const filePath = path.join(uploadsDir, fileName);
+                    fs.writeFileSync(filePath, file.buffer);
+                    updateData.image = `/uploads/${fileName}`;
                 }
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('project-images')
-                    .getPublicUrl(fileName);
-
-                updateData.image = publicUrl;
             }
 
             const updatedBlog = await prisma.blog.update({

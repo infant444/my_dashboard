@@ -20,4 +20,10 @@ router.put('/:id', uploadMultiple,asyncHandler(ProjectController.updateProject))
 // DELETE - DELETE /projects/:id
 router.delete('/:id',asyncHandler(ProjectController.deleteProject));
 
+// ADD IMAGES - POST /projects/:id/images
+router.post('/:id/images', uploadMultiple, asyncHandler(ProjectController.addProjectImages));
+
+// REMOVE IMAGE - DELETE /projects/:id/images
+router.delete('/:id/images', asyncHandler(ProjectController.removeProjectImage));
+
 export default router;
