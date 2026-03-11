@@ -7,7 +7,7 @@ router.use(authMiddleware)
 // GET USER PROFILE - GET /users/profile
 router.get('/profile', asyncHandler(UserController.GetProfile));
 // GET ALL USERS - GET /users
-router.get("/",asyncHandler(UserController.getAll));
+router.get("/all",asyncHandler(UserController.getAll));
 // UPDATE USER - PUT /users/:user_id
 router.put("/:user_id",asyncHandler(UserController.updateUser));
 // DELETE USER - DELETE /users/:user_id

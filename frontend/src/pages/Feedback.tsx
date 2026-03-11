@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { useFeedbacks } from '../hooks/useApi';
 import { feedbackService } from '../services/api.service';
@@ -14,6 +15,7 @@ const Feedback: React.FC = () => {
     type: 'other' as 'suggestion' | 'compliment' | 'complaint' | 'positive' | 'other',
     rating: 5,
     message: '',
+    adminNote: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +28,7 @@ const Feedback: React.FC = () => {
       }
       setIsModalOpen(false);
       setEditingFeedback(null);
-      setFormData({ name: '', email: '', type: 'other', rating: 5, message: '' });
+      setFormData({ name: '', email: '', type: 'other', rating: 5, message: '', adminNote: '' });
       refetch();
     } catch (error) {
       console.error('Error saving feedback:', error);
@@ -41,6 +43,7 @@ const Feedback: React.FC = () => {
       type: feedback.type || 'other',
       rating: feedback.rating,
       message: feedback.message,
+      adminNote: feedback.adminNote || '',
     });
     setIsModalOpen(true);
   };
@@ -84,7 +87,12 @@ const Feedback: React.FC = () => {
           <div key={feedback.id} className="bg-white rounded-lg shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold mb-1">{feedback.name}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold">{feedback.name}</h3>
+                  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                    {feedback.type}
+                  </span>
+                </div>
                 <p className="text-sm text-gray-600 mb-2">{feedback.email}</p>
                 <div className="flex items-center mb-3">
                   {renderStars(feedback.rating)}
@@ -96,6 +104,13 @@ const Feedback: React.FC = () => {
             </div>
             
             <p className="text-gray-700 mb-4 line-clamp-4">{feedback.message}</p>
+            
+            {feedback.adminNote && (
+              <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                <p className="text-xs font-semibold text-yellow-800 mb-1">Admin Note:</p>
+                <p className="text-sm text-yellow-700">{feedback.adminNote}</p>
+              </div>
+            )}
             
             <div className="flex justify-between items-center">
               <span className="text-xs text-gray-500">
@@ -126,7 +141,7 @@ const Feedback: React.FC = () => {
         onClose={() => {
           setIsModalOpen(false);
           setEditingFeedback(null);
-          setFormData({ name: '', email: '', type: 'other', rating: 5, message: '' });
+          setFormData({ name: '', email: '', type: 'other', rating: 5, message: '', adminNote: '' });
         }}
         title={editingFeedback ? 'Edit Feedback' : 'Add New Feedback'}
       >
@@ -184,6 +199,13 @@ const Feedback: React.FC = () => {
             onChange={(e) => setFormData({ ...formData, message: e.target.value })}
             rows={4}
             required
+          />
+          <Textarea
+            label="Admin Note (Optional)"
+            value={formData.adminNote}
+            onChange={(e) => setFormData({ ...formData, adminNote: e.target.value })}
+            rows={3}
+            placeholder="Internal notes for admin use only..."
           />
           <div className="flex justify-end space-x-2">
             <Button

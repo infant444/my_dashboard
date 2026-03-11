@@ -5,23 +5,63 @@ export class UserController {
     static async GetProfile(req: any, res: Response, next: NextFunction) {
         try {
             const userId = req.user.id;
-            const user = await prisma.user.findUnique(
-                {
-                    where: {
-                        userId: userId
-                    }
+            const user = await prisma.user.findUnique({
+                where: {
+                    userId: userId
+                },
+                select: {
+                    userId: true,
+                    email: true,
+                    fullName: true,
+                    role: true,
+                    firstLogin: true,
+                    phone: true,
+                    position: true,
+                    isActive: true
                 }
-            )
-            res.json(user);
+            });
+            
+            if (!user) {
+                return next({ status: 404, message: "User not found" });
+            }
+
+            res.json({
+                user_id: user.userId,
+                email: user.email,
+                full_name: user.fullName,
+                role: user.role,
+                first_login: user.firstLogin,
+                phone: user.phone,
+                position: user.position,
+                is_active: user.isActive
+            });
         } catch (err) {
             next(err)
         }
     }
     static async getAll(req: Request, res: Response, next: NextFunction) {
         try {
-            const users = await prisma.user.findMany();
+            const users = await prisma.user.findMany({
+                select: {
+                    userId: true,
+                    email: true,
+                    fullName: true,
+                    phone: true,
+                    position: true,
+                    role: true,
+                    isActive: true,
+                    firstLogin: true,
+                    createdAt: true,
+                    updatedAt: true
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+            console.log(users);
             res.json(users);
         } catch (err) {
+            console.error('Get all users error:', err);
             next(err);
         }
     }

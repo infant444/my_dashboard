@@ -4,7 +4,78 @@ import { supabase, isSupabaseConfigured } from "../config/supabase.config";
 
 export class ProjectController {
     // CREATE
-    static async createProject(req: Request, res: Response, next: NextFunction) {
+    // static async createProject(req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         const { 
+    //             projectName, 
+    //             techStack, 
+    //             projectDescription, 
+    //             liveDemo, 
+    //             gitRepo, 
+    //             duration, 
+    //             cost, 
+    //             category
+    //         } = req.body;
+
+    //         if (!projectName || !techStack || !category) {
+    //             return next({ status: 400, message: "Required fields missing" });
+    //         }
+
+    //         const files = req.files as Express.Multer.File[];
+    //         const imageUrls: string[] = [];
+
+    //         // Upload multiple images to Supabase if configured
+    //         if (files && files.length > 0) {
+    //             if (isSupabaseConfigured() && supabase) {
+    //                 let count=0
+    //                 for (const file of files) {
+    //                      const fileName = `${Date.now()}-${projectName}(${count})`;
+                        
+    //                     const { data, error } = await supabase.storage
+    //                         .from('Sancilo')
+    //                         .upload(fileName, file.buffer, {
+    //                             contentType: file.mimetype
+    //                         });
+
+    //                     if (error) {
+    //                         console.error('Supabase upload error:', error);
+    //                         return next({ status: 500, message: `Image upload failed: ${error.message}` });
+    //                     }
+
+    //                     const { data: { publicUrl } } = supabase.storage
+    //                         .from('Sancilo')
+    //                         .getPublicUrl(fileName);
+
+    //                     imageUrls.push(publicUrl);
+    //                     count+=1;
+    //                     console.log(imageUrls)
+    //                 }
+    //             } else {
+    //                 // Skip image upload if Supabase not configured
+    //                 console.log('Supabase not configured, skipping image upload');
+    //             }
+    //         }
+
+    //         const newProject = await prisma.project.create({
+    //             data: {
+    //                 projectName,
+    //                 techStack: Array.isArray(techStack) ? techStack : [techStack],
+    //                 projectDescription,
+    //                 projectThumbnail: imageUrls,
+    //                 liveDemo,
+    //                 gitRepo,
+    //                 duration,
+    //                 cost: cost ? parseInt(cost) : null,
+    //                 category
+    //             }
+    //         });
+
+    //         res.json(newProject);
+    //     } catch (err) {
+    //         next(err);
+    //     }
+    // }
+ static async createProject(req: Request, res: Response, next: NextFunction) {
         try {
             const { 
                 projectName, 
@@ -24,35 +95,26 @@ export class ProjectController {
             const files = req.files as Express.Multer.File[];
             const imageUrls: string[] = [];
 
-            // Upload multiple images to Supabase if configured
-            if (files && files.length > 0) {
-                if (isSupabaseConfigured() && supabase) {
-                    let count=0
-                    for (const file of files) {
-                         const fileName = `${Date.now()}-${projectName}(${count})`;
-                        
-                        const { data, error } = await supabase.storage
-                            .from('Sancilo')
-                            .upload(fileName, file.buffer, {
-                                contentType: file.mimetype
-                            });
+            // Upload multiple images to Supabase
+            if (files && files.length > 0 && supabase) {
+                for (const file of files) {
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    
+                    const { data, error } = await supabase.storage
+                        .from('Sancilo')
+                        .upload(fileName, file.buffer, {
+                            contentType: file.mimetype
+                        });
 
-                        if (error) {
-                            console.error('Supabase upload error:', error);
-                            return next({ status: 500, message: `Image upload failed: ${error.message}` });
-                        }
-
-                        const { data: { publicUrl } } = supabase.storage
-                            .from('Sancilo')
-                            .getPublicUrl(fileName);
-
-                        imageUrls.push(publicUrl);
-                        count+=1;
-                        console.log(imageUrls)
+                    if (error) {
+                        return next({ status: 500, message: "Image upload failed" });
                     }
-                } else {
-                    // Skip image upload if Supabase not configured
-                    console.log('Supabase not configured, skipping image upload');
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('Sancilo')
+                        .getPublicUrl(fileName);
+
+                    imageUrls.push(publicUrl);
                 }
             }
 
@@ -75,7 +137,6 @@ export class ProjectController {
             next(err);
         }
     }
-
     // READ ALL
     static async getAllProjects(req: Request, res: Response, next: NextFunction) {
         try {
@@ -107,7 +168,76 @@ export class ProjectController {
     }
 
     // UPDATE
-    static async updateProject(req: Request, res: Response, next: NextFunction) {
+    // static async updateProject(req: Request, res: Response, next: NextFunction) {
+    //     try {
+    //         const projectId = req.params.id as string;
+    //         const { 
+    //             projectName, 
+    //             techStack, 
+    //             projectDescription, 
+    //             liveDemo, 
+    //             gitRepo, 
+    //             duration, 
+    //             cost, 
+    //             category
+    //         } = req.body;
+
+    //         const files = req.files as Express.Multer.File[];
+    //         let imageUrls: string[] = [];
+
+    //         // Upload new images if provided and Supabase is configured
+    //         if (files && files.length > 0) {
+    //             if (isSupabaseConfigured() && supabase) {
+    //                 for (const file of files) {
+    //                     const fileName = `${Date.now()}-${file.originalname}`;
+                        
+    //                     const { data, error } = await supabase.storage
+    //                         .from('Sancilo')
+    //                         .upload(fileName, file.buffer, {
+    //                             contentType: file.mimetype
+    //                         });
+
+    //                     if (error) {
+    //                         console.error('Supabase upload error:', error);
+    //                         return next({ status: 500, message: `Image upload failed: ${error.message}` });
+    //                     }
+
+    //                     const { data: { publicUrl } } = supabase.storage
+    //                         .from('Sancilo')
+    //                         .getPublicUrl(fileName);
+
+    //                     imageUrls.push(publicUrl);
+    //                 }
+    //             }
+    //         }
+
+    //         const updateData: any = {
+    //             projectName,
+    //             techStack: Array.isArray(techStack) ? techStack : [techStack],
+    //             projectDescription,
+    //             liveDemo,
+    //             gitRepo,
+    //             duration,
+    //             cost: cost ? parseInt(cost) : null,
+    //             category
+    //         };
+
+    //         // Only update images if new ones are uploaded
+    //         if (imageUrls.length > 0) {
+    //             updateData.projectThumbnail = imageUrls;
+    //         }
+
+    //         const updatedProject = await prisma.project.update({
+    //             where: { projectId },
+    //             data: updateData
+    //         });
+
+    //         res.json(updatedProject);
+    //     } catch (err) {
+    //         next(err);
+    //     }
+    // }
+  static async updateProject(req: Request, res: Response, next: NextFunction) {
         try {
             const projectId = req.params.id as string;
             const { 
@@ -124,29 +254,26 @@ export class ProjectController {
             const files = req.files as Express.Multer.File[];
             let imageUrls: string[] = [];
 
-            // Upload new images if provided and Supabase is configured
-            if (files && files.length > 0) {
-                if (isSupabaseConfigured() && supabase) {
-                    for (const file of files) {
-                        const fileName = `${Date.now()}-${file.originalname}`;
-                        
-                        const { data, error } = await supabase.storage
-                            .from('Sancilo')
-                            .upload(fileName, file.buffer, {
-                                contentType: file.mimetype
-                            });
+            // Upload new images if provided
+            if (files && files.length > 0 && supabase) {
+                for (const file of files) {
+                    const fileName = `${Date.now()}-${file.originalname}`;
+                    
+                    const { data, error } = await supabase.storage
+                        .from('Sancilo')
+                        .upload(fileName, file.buffer, {
+                            contentType: file.mimetype
+                        });
 
-                        if (error) {
-                            console.error('Supabase upload error:', error);
-                            return next({ status: 500, message: `Image upload failed: ${error.message}` });
-                        }
-
-                        const { data: { publicUrl } } = supabase.storage
-                            .from('Sancilo')
-                            .getPublicUrl(fileName);
-
-                        imageUrls.push(publicUrl);
+                    if (error) {
+                        return next({ status: 500, message: "Image upload failed" });
                     }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('Sancilo')
+                        .getPublicUrl(fileName);
+
+                    imageUrls.push(publicUrl);
                 }
             }
 
@@ -176,7 +303,6 @@ export class ProjectController {
             next(err);
         }
     }
-
     
 
     // DELETE
@@ -210,7 +336,7 @@ export class ProjectController {
 
             const newImageUrls: string[] = [];
 
-            if (isSupabaseConfigured() && supabase) {
+            if (supabase) {
                 let count=0;
                 for (const file of files) {
                     

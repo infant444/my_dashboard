@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { LoadingProvider } from './contexts/LoadingContext';
+import { LoadingProvider, useLoading } from './contexts/LoadingContext';
+import { setLoadingCallback } from './services/api.service';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/DashboardLayout';
 import ResetPassword from './components/ResetPassword';
@@ -22,6 +23,11 @@ import ProjectView from './pages/ProjectView';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
+  const { setLoading } = useLoading();
+
+  useEffect(() => {
+    setLoadingCallback(setLoading);
+  }, [setLoading]);
 
   if (loading) {
     return (

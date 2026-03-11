@@ -3,6 +3,12 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
+let loadingCallback: ((loading: boolean) => void) | null = null;
+
+export const setLoadingCallback = (callback: (loading: boolean) => void) => {
+  loadingCallback = callback;
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -11,22 +17,32 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add token
+// Request interceptor to add token and show loader
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('userToken');
   if (token) {
     config.headers.access_token = token;
   }
 
+  if (loadingCallback) {
+    loadingCallback(true);
+  }
+
   return config;
 });
 
-// Response interceptor to handle token expiration
+// Response interceptor to handle token expiration and hide loader
 api.interceptors.response.use(
   (response) => {
+    if (loadingCallback) {
+      loadingCallback(false);
+    }
     return response;
   },
   (error) => {
+    if (loadingCallback) {
+      loadingCallback(false);
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('userToken');
       window.location.href = '/login';
@@ -95,6 +111,11 @@ export const userService = {
   getAll: () => api.get('/user'),
   update: (userId: string, data: any) => api.put(`/user/${userId}`, data),
   delete: (userId: string) => api.delete(`/user/${userId}`),
+};
+
+// Dashboard Services
+export const dashboardService = {
+  getStats: () => api.get('/dashboard/stats'),
 };
 
 export default api;

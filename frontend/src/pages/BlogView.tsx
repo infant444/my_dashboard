@@ -2,14 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { blogService } from '../services/api.service';
-import { Loading } from '../components/UI';
 import { ArrowLeft, Calendar, Clock, User, Tag } from 'lucide-react';
 
 const BlogView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [blog, setBlog] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchBlog = async () => {
@@ -20,16 +18,13 @@ const BlogView: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching blog:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchBlog();
   }, [id]);
 
-  if (loading) return <Loading />;
-  if (!blog) return <div>Blog not found</div>;
+  if (!blog) return <div className="flex justify-center items-center h-64"><p className="text-gray-500">Blog not found</p></div>;
 
   return (
     <div className="max-w-4xl mx-auto">

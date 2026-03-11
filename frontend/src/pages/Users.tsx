@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, User, Search, Eye, X } from 'lucide-react';
@@ -17,7 +18,6 @@ interface User {
 
 const Users: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,15 +37,15 @@ const Users: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
+      console.log('Fetching users...');
       const response = await userService.getAll();
+      console.log('Users response:', response.data);
       setUsers(response.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch users:', error);
-      toast.error('Failed to fetch users');
+      console.error('Error response:', error.response);
+      toast.error(error.response?.data?.message || 'Failed to fetch users');
       setUsers([]);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -124,14 +124,6 @@ const Users: React.FC = () => {
     user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div>

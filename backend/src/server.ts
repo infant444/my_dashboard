@@ -11,7 +11,10 @@ import EnquiryRouter from "./routes/enquiry.routes";
 import feedbackRouter from "./routes/feedback.routes";
 import projectRouter from "./routes/project.routes";
 import UserRouter from "./routes/user.routes";
+import DashboardRouter from "./routes/dashboard.routes";
 import { errorHandler } from './middleware/error.middleware';
+
+process.setMaxListeners(15);
 
 const app=express();
 // const server = http.createServer(app);
@@ -53,6 +56,7 @@ app.use("/api/enquiry",EnquiryRouter);
 app.use("/api/feedback",feedbackRouter);
 app.use("/api/project",projectRouter);
 app.use("/api/user",UserRouter);
+app.use("/api/dashboard",DashboardRouter);
 app.use(errorHandler);
 const port=process.env.PORT || 5000;
 app.listen(port,()=>{

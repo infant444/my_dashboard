@@ -2,14 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { projectService } from '../services/api.service';
-import { Loading } from '../components/UI';
-import { ArrowLeft, ExternalLink, Github, Calendar, DollarSign, Tag } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Github, Calendar, DollarSign, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ProjectView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
 
   useEffect(() => {
@@ -22,16 +20,25 @@ const ProjectView: React.FC = () => {
         }
       } catch (error) {
         console.error('Error fetching project:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchProject();
   }, [id]);
 
-  if (loading) return <Loading />;
-  if (!project) return <div>Project not found</div>;
+  const nextImage = () => {
+    if (project.projectThumbnail && project.projectThumbnail.length > 0) {
+      setSelectedImage((prev) => (prev + 1) % project.projectThumbnail.length);
+    }
+  };
+
+  const prevImage = () => {
+    if (project.projectThumbnail && project.projectThumbnail.length > 0) {
+      setSelectedImage((prev) => (prev - 1 + project.projectThumbnail.length) % project.projectThumbnail.length);
+    }
+  };
+
+  if (!project) return <div className="flex justify-center items-center h-64"><p className="text-gray-500">Project not found</p></div>;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -51,12 +58,36 @@ const ProjectView: React.FC = () => {
         <div>
           {project.projectThumbnail && project.projectThumbnail.length > 0 ? (
             <div>
-              <div className="mb-4">
+              <div className="mb-4 relative group">
                 <img
                   src={project.projectThumbnail[selectedImage]}
                   alt={project.projectName}
                   className="w-full h-96 object-cover rounded-lg shadow-lg"
                 />
+                {project.projectThumbnail.length > 1 && (
+                  <>
+                    {/* Left Arrow */}
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    {/* Right Arrow */}
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                    {/* Image Counter */}
+                    <div className="absolute bottom-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                      {selectedImage + 1} / {project.projectThumbnail.length}
+                    </div>
+                  </>
+                )}
               </div>
               {project.projectThumbnail.length > 1 && (
                 <div className="grid grid-cols-4 gap-2">
@@ -65,8 +96,8 @@ const ProjectView: React.FC = () => {
                       key={index}
                       src={image}
                       alt={`${project.projectName} ${index + 1}`}
-                      className={`h-20 object-cover rounded cursor-pointer ${
-                        selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                      className={`h-20 object-cover rounded cursor-pointer transition-all ${
+                        selectedImage === index ? 'ring-2 ring-blue-500 scale-105' : 'hover:scale-105'
                       }`}
                       onClick={() => setSelectedImage(index)}
                     />

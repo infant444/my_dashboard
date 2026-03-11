@@ -1,5 +1,4 @@
-import { verify ,TokenExpiredError} from "jsonwebtoken";
-
+import { verify, TokenExpiredError } from "jsonwebtoken";
 
 export default (req: any, res: any, next: any) => {
     const token = req.headers.access_token as string;
@@ -11,21 +10,20 @@ export default (req: any, res: any, next: any) => {
     }
 
     try {
-        const decoderedUser = verify(token, process.env.JWT_USER_AUTH!);
-        req.user = decoderedUser;
+        const decodedUser = verify(token, process.env.JWT_USER_AUTH!);
+        req.user = decodedUser;
+        return next();
     } catch (error) {
-         if (error instanceof TokenExpiredError) {
-      return res.status(300).json({
-        success: false,
-        message: "Token expired"
-      });
-    }
+        if (error instanceof TokenExpiredError) {
+            return res.status(401).json({
+                success: false,
+                message: "Token expired. Please login again."
+            });
+        }
 
-    // 🔴 Invalid token
-    return res.status(401).json({
-      success: false,
-      message: "Invalid token"
-    });
+        return res.status(401).json({
+            success: false,
+            message: "Invalid token. Please login again."
+        });
     }
-    return next();
-}
+};

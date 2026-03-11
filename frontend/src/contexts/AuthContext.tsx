@@ -39,25 +39,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const checkAuthStatus = async () => {
     try {
       const token = localStorage.getItem('userToken');
-      const userData = localStorage.getItem('userData');
       
       if (!token) {
         setLoading(false);
         return;
       }
 
-      if (userData) {
-        setUser(JSON.parse(userData));
-        setLoading(false);
-        return;
-      }
-
       const response = await userService.getProfile();
       if (response.data) {
-        localStorage.setItem('userData', JSON.stringify(response.data));
-        setUser(response.data);
+        const userData = {
+          user_id: response.data.user_id,
+          email: response.data.email,
+          name: response.data.full_name,
+          role: response.data.role,
+          firstLogin: response.data.first_login
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        setUser(userData);
       }
     } catch (error) {
+      console.error('Auth check failed:', error);
       localStorage.removeItem('userToken');
       localStorage.removeItem('userData');
       setUser(null);
